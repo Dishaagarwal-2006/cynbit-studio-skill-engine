@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cynbit Studio · Skill Engine</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<style>
+:root{--bg:#0b0f1a;--panel:#121829;--panel2:#171f35;--line:#243053;--text:#e6eaf5;--mut:#8b97b8;--acc:#6c8cff;--acc2:#22d3a6;--bad:#ff6b81;--warn:#ffb454}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.brand{font-weight:700;font-size:16px}.brand b{color:var(--acc)}.sub{color:var(--mut);font-size:12px}
+.badge{font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);color:var(--mut)}.badge.on{color:var(--acc2);border-color:var(--acc2)}
+main{display:grid;grid-template-columns:230px minmax(0,1fr) 330px;gap:14px;padding:14px;max-width:1500px;margin:0 auto}
+@media(max-width:1100px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}h3{margin:0 0 6px;font-size:18px}
+.plist button{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:8px;cursor:pointer;font:inherit}
+.plist button:hover{border-color:var(--acc)}.plist button.active{border-color:var(--acc);background:#1c2748}.plist small{color:var(--mut)}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;background:#1c2748;color:var(--acc);margin:0 4px 4px 0}
+.ex{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:var(--panel2);padding:6px 9px;border-radius:8px;margin:4px 0;color:#c9d3f0;overflow-x:auto;white-space:nowrap}
+.CodeMirror{height:300px;border-radius:10px;font-size:14px;border:1px solid var(--line)}textarea#fallback{width:100%;height:300px;background:#212121;color:#eee;font:14px ui-monospace,Consolas,monospace;border-radius:10px;border:1px solid var(--line);padding:10px}
+.row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+button.run{background:linear-gradient(135deg,var(--acc),#8a6cff);color:#fff;border:0;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;font-size:14px}
+button.run:disabled{opacity:.6;cursor:wait}button.ghost{background:none;border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:9px 14px;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.chip{font-size:12px;padding:3px 10px;border-radius:8px}.chip.ok{background:#0f3b30;color:var(--acc2)}.chip.no{background:#44202a;color:var(--bad)}
+.banner{padding:9px 12px;border-radius:10px;margin:8px 0;font-size:13px}.banner.bad{background:#44202a;color:#ffc2cc}.banner.warn{background:#463318;color:#ffd9a0}
+.muted{color:var(--mut);margin:4px 0}.fail{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:var(--panel2);padding:8px;border-radius:8px;margin:6px 0;white-space:pre-wrap;word-break:break-word}
+ul{margin:4px 0 8px 18px;padding:0}.bar{height:7px;border-radius:99px;background:var(--panel2);overflow:hidden;margin:3px 0 9px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .6s}
+.rub{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px}.delta{color:var(--acc2);font-size:12px;margin-right:8px}
+.hint{border-left:3px solid var(--acc);padding:6px 10px;background:var(--panel2);border-radius:0 8px 8px 0;margin:8px 0}
+.next{background:var(--panel2);border-radius:10px;padding:10px;border:1px dashed var(--acc)}svg text{fill:var(--mut);font-size:11px}
+#out{margin-top:12px}.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="brand"><b>Cynbit Studio</b> · Skill Engine</div><div class="sub">Adaptive code evaluation · Bayesian skill tracing · human-in-the-loop</div></div>
+  <div class="row" style="margin:0"><span class="badge" id="llm">AI feedback: …</span><button class="ghost" id="reset">Reset progress</button></div>
+</header>
+<main>
+  <section class="card"><h2>Challenges</h2><div class="plist" id="plist"></div></section>
+  <section class="col">
+    <div class="card">
+      <h3 id="ptitle">Loading…</h3><div id="ptags"></div><p id="pstate" class="muted"></p><div id="pex"></div>
+      <div style="margin-top:12px"><textarea id="fallback" style="display:none" spellcheck="false"></textarea><div id="editor"></div></div>
+      <div class="row"><button class="run" id="run">▶ Run &amp; Evaluate</button><span class="muted" id="status"></span></div>
+    </div>
+    <div class="card" id="outcard" style="display:none"><h2>Result</h2><div id="out"></div></div>
+  </section>
+  <aside class="col">
+    <div class="card"><h2>Skill radar</h2><svg id="radar" viewBox="0 0 320 300" width="100%"></svg></div>
+    <div class="card"><h2>Role fit</h2><div id="roles"></div></div>
+    <div class="card"><h2>Recommended next</h2><div id="next" class="next muted">Solve a problem to get a recommendation.</div></div>
+  </aside>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let LID='guest'+Math.random().toString(36).slice(2,8);
+try{LID=localStorage.getItem('lid')||LID;localStorage.setItem('lid',LID)}catch(e){}
+let problems=[],cur=null,profile=null,editor=null;
+const api=async(p,o)=>{const r=await fetch(p,o);if(!r.ok)throw new Error((await r.text()).slice(0,200));return r.json()};
+const getCode=()=>editor?editor.getValue():$('fallback').value;
+const setCode=v=>editor?editor.setValue(v):($('fallback').value=v);
+
+function initEditor(){
+  if(window.CodeMirror){editor=CodeMirror($('editor'),{mode:'python',theme:'material-darker',lineNumbers:true,indentUnit:4,
+    extraKeys:{Tab:cm=>cm.replaceSelection('    ','end'),'Ctrl-Enter':run}})}
+  else{$('fallback').style.display='block'}
+}
+function renderList(){
+  $('plist').innerHTML=problems.map(p=>`<button data-id="${p.id}" class="${cur&&cur.id===p.id?'active':''}"><span>${profile&&profile.solved.includes(p.id)?'✅ ':''}${esc(p.title)}</span><small>${'★'.repeat(p.difficulty)}</small></button>`).join('');
+  document.querySelectorAll('#plist button').forEach(b=>b.onclick=()=>select(b.dataset.id));
+}
+function select(id){
+  cur=problems.find(p=>p.id===id);
+  $('ptitle').textContent=cur.title;
+  $('ptags').innerHTML=cur.skills.map(s=>`<span class="tag">${esc(s)}</span>`).join('');
+  $('pstate').textContent=cur.statement;
+  $('pex').innerHTML=cur.examples.map(e=>`<div class="ex">input: ${esc(JSON.stringify(e.args))} → ${esc(JSON.stringify(e.expected))}</div>`).join('');
+  setCode(cur.starter);$('outcard').style.display='none';renderList();
+}
+/* radar with animated transitions */
+let shown={},raf=null;
+function drawRadar(target){
+  const keys=Object.keys(target);if(!keys.length)return;
+  const from={...shown};const t0=performance.now();cancelAnimationFrame(raf);
+  const step=now=>{
+    const k=Math.min(1,(now-t0)/600),e=1-Math.pow(1-k,3);
+    const v={};keys.forEach(s=>v[s]=(from[s]??0.3)+(target[s]-(from[s]??0.3))*e);
+    paint(keys,v);
+    if(k<1)raf=requestAnimationFrame(step);else shown={...target};
+  };raf=requestAnimationFrame(step);
+}
+function paint(keys,v){
+  const cx=160,cy=150,R=100,n=keys.length;
+  const pt=(i,r)=>{const a=-Math.PI/2+2*Math.PI*i/n;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]};
+  let s='';
+  [.25,.5,.75,1].forEach(f=>s+=`<polygon points="${keys.map((_,i)=>pt(i,R*f).join(',')).join(' ')}" fill="none" stroke="#243053"/>`);
+  keys.forEach((_,i)=>{const[x,y]=pt(i,R);s+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#243053"/>`});
+  s+=`<polygon points="${keys.map((k,i)=>pt(i,R*v[k]).join(',')).join(' ')}" fill="rgba(108,140,255,.28)" stroke="#6c8cff" stroke-width="2"/>`;
+  keys.forEach((k,i)=>{const[x,y]=pt(i,R*v[k]);s+=`<circle cx="${x}" cy="${y}" r="3.5" fill="#22d3a6"/>`;
+    const[lx,ly]=pt(i,R+20);s+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle">${esc(k)} ${Math.round(v[k]*100)}%</text>`});
+  $('radar').innerHTML=s;
+}
+function renderProfile(p){
+  profile=p;drawRadar(p.mastery);
+  $('roles').innerHTML=Object.entries(p.role_fit).map(([r,v])=>`<div>${esc(r)} <b style="float:right">${v}%</b></div><div class="bar"><i style="width:${v}%"></i></div>`).join('');
+  const n=p.next;$('next').innerHTML=`<b>${esc(n.title)}</b><div class="muted">${esc(n.reason)}</div><div class="row"><button class="ghost" id="go">Open challenge →</button></div>`;
+  $('go').onclick=()=>select(n.problem_id);renderList();
+}
+function renderResult(r){
+  const run=r.run,fb=r.feedback;let h='';
+  if(run.error)h+=`<div class="banner bad">${esc(run.error)}</div>`;
+  if(run.timed_out)h+=`<div class="banner warn">⏱ Time limit hit: your solution is too slow for the larger tests. Think about complexity.</div>`;
+  h+=`<div class="chips">${run.details.map(d=>`<span class="chip ${d.ok?'ok':'no'}">${d.visible?'Test':'Hidden'} ${d.i+1}</span>`).join('')}</div>`;
+  h+=`<p class="muted"><b>${run.passed}/${run.total}</b> tests passed · ${run.runtime_ms} ms</p>`;
+  h+=run.details.filter(d=>d.visible&&!d.ok).map(d=>`<div class="fail">input: ${esc(JSON.stringify(d.args))}\nexpected: ${esc(JSON.stringify(d.expected))}\ngot: ${esc(d.got)}</div>`).join('');
+  const dl=Object.entries(r.profile.delta||{});
+  if(dl.length)h+=`<p>${dl.map(([k,v])=>`<span class="delta" style="color:${v<0?'var(--bad)':'var(--acc2)'}">${esc(k)} ${v>=0?'+':''}${(v*100).toFixed(1)}%</span>`).join('')}</p>`;
+  if(r.mentor_flag)h+=`<div class="banner warn">🧑‍🏫 <b>Flagged for mentor review:</b> ${esc(r.mentor_flag)}</div>`;
+  if(fb){
+    h+=`<h2 style="margin-top:14px">AI mentor feedback</h2><p>${esc(fb.summary)}</p><div class="rub">${Object.entries(fb.rubric).map(([k,v])=>`<div>${esc(k.replace('_',' '))} <b style="float:right">${v}/5</b><div class="bar"><i style="width:${v*20}%"></i></div></div>`).join('')}</div>`;
+    h+=`<div class="muted">Estimated complexity: <b>${esc(fb.time_complexity)}</b></div>`;
+    if(fb.strengths.length)h+=`<b>Strengths</b><ul>${fb.strengths.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+    if(fb.improvements.length)h+=`<b>To improve</b><ul>${fb.improvements.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+    h+=`<div class="hint">💡 ${esc(fb.hint)}</div>`;
+  }else h+=`<p class="muted">AI feedback unavailable (no API key or API error). Test results and skill tracking still work.</p>`;
+  $('out').innerHTML=h;$('outcard').style.display='block';$('outcard').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function run(){
+  if(!cur)return;const b=$('run');b.disabled=true;b.textContent='Running…';$('status').textContent='Executing tests and asking the AI mentor…';
+  try{const r=await api('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({learner_id:LID,problem_id:cur.id,code:getCode()})});
+    renderResult(r);renderProfile(r.profile);$('status').textContent=''}
+  catch(e){$('status').textContent='Error: '+e.message}
+  b.disabled=false;b.textContent='▶ Run & Evaluate';
+}
+$('run').onclick=run;
+$('reset').onclick=async()=>{renderProfile(await api('/api/learner/'+LID,{method:'DELETE'}));shown={};$('outcard').style.display='none'};
+(async()=>{
+  initEditor();
+  try{
+    const h=await api('/api/health');$('llm').textContent='AI feedback: '+(h.llm_enabled?'on':'off');$('llm').className='badge'+(h.llm_enabled?' on':'');
+    problems=await api('/api/problems');profile=await api('/api/learner/'+LID);
+    select(problems[0].id);renderProfile(profile);
+  }catch(e){$('ptitle').textContent='Backend not reachable: '+e.message}
+})();
+</script>
+</body>
+</html>
