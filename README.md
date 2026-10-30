@@ -1,5 +1,7 @@
 # Cynbit Studio Skill Engine
 
+**Live Demo:** https://cynbit-studio-skill-engine-1.onrender.com/
+
 Adaptive code-evaluation and skill-tracking engine for Cynbit Studio (coding practice, AI code evaluation, career prep, job matching).
 
 **Flow:** student code -> sandboxed test run -> Gemini rubric review -> Bayesian Knowledge Tracing updates per-skill mastery
